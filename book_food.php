@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['meal_id'])) {
 }
 
 // Fetch meals from the database
-$meals = $conn->query("SELECT * FROM meals");
+$meals = $conn->query("SELECT * FROM meals WHERE meal_name IS NOT NULL AND meal_name != ''");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,32 +45,50 @@ $meals = $conn->query("SELECT * FROM meals");
       background: #f5f5f5;
       margin: 0;
       padding: 0;
+      margin-left: 280px;
     }
+
     .container {
       max-width: 1100px;
-      margin: 50px auto;
+      margin: 80px auto;
       padding: 0 20px;
     }
+
+    h2 {
+      margin-bottom: 30px;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 30px;
     }
+
     .card {
       background: white;
       border-radius: 10px;
       padding: 20px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 200px;
     }
+
     .card h3 {
       margin-top: 0;
       color: #333;
     }
+
     .card p {
       color: #666;
     }
+
+    .card form {
+      margin-top: auto;
+    }
+
     .card form button {
-      margin-top: 15px;
       background: #28a745;
       color: white;
       padding: 10px 16px;
@@ -78,51 +96,68 @@ $meals = $conn->query("SELECT * FROM meals");
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
+      width: 100%;
     }
+
     .card form button:hover {
       background: #218838;
     }
-    .success, .error {
-      text-align: center;
-      padding: 12px;
-      margin-bottom: 20px;
+
+    .popup {
+      position: fixed;
+      top: 80px;
+      right: 30px;
+      padding: 15px 20px;
+      border-radius: 8px;
       color: white;
       font-weight: bold;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.5s ease;
     }
-    .success {
+
+    .popup.success {
       background-color: #28a745;
     }
-    .error {
+
+    .popup.error {
       background-color: #dc3545;
     }
   </style>
 </head>
 <body>
 
-<?php include 'user_navbar.php'; ?>
+<?php
+include('init_user_data.php');
+include('user_navbar.php');
+?>
 
 <div class="container">
-  <h2 style="margin-bottom: 30px;">🍛 Available Meal Options</h2>
+  <h2>🍛 Available Meal Options</h2>
 
   <?php
   if (isset($_GET['status'])) {
       if ($_GET['status'] === 'success') {
-          echo '<div class="success">Meal booked successfully!</div>';
+          echo '<div class="popup success" id="popupMessage">✅ Meal booked successfully!</div>';
       } else {
-          echo '<div class="error">Error booking meal. Please try again.</div>';
+          echo '<div class="popup error" id="popupMessage">❌ Error booking meal. Please try again.</div>';
       }
   }
   ?>
 
   <div class="grid">
     <?php
-    if ($meals->num_rows > 0) {
+    if ($meals && $meals->num_rows > 0) {
         while ($meal = $meals->fetch_assoc()) {
+            if (empty(trim($meal['meal_name']))) continue;
+
             echo '
             <div class="card">
-              <h3>' . htmlspecialchars($meal['meal_name']) . '</h3>
-              <p>' . htmlspecialchars($meal['description']) . '</p>
-              <p><strong>Rs. ' . htmlspecialchars($meal['price']) . '</strong></p>
+              <div>
+                <h3>' . htmlspecialchars($meal['meal_name']) . '</h3>
+                <p>' . (!empty($meal['description']) ? htmlspecialchars($meal['description']) : '<em>No description</em>') . '</p>
+                <p><strong>Rs. ' . number_format($meal['price'], 2) . '</strong></p>
+              </div>
               <form method="POST" action="book_food.php">
                 <input type="hidden" name="meal_id" value="' . $meal['id'] . '">
                 <button type="submit"><i class="fas fa-check-circle"></i> Book Meal</button>
@@ -135,6 +170,18 @@ $meals = $conn->query("SELECT * FROM meals");
     ?>
   </div>
 </div>
+
+<?php if (isset($_GET['status'])): ?>
+<script>
+  setTimeout(function () {
+    var popup = document.getElementById('popupMessage');
+    if (popup) {
+      popup.style.opacity = '0';
+      setTimeout(() => popup.remove(), 500); // remove after fade
+    }
+  }, 3000);
+</script>
+<?php endif; ?>
 
 </body>
 </html>

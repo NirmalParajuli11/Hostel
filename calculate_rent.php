@@ -93,6 +93,21 @@ $students = $conn->query($sql);
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); }
     .modal-content { background: white; padding: 20px; margin: 100px auto; max-width: 400px; border-radius: 8px; }
     .close { float: right; font-size: 20px; cursor: pointer; }
+     .back-button {
+      display: inline-block;
+      margin-top: 20px;
+      margin: 20px;
+      background: #4b0082;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .back-button:hover {
+      background: #360061;
+    }
   </style>
 </head>
 <body>
@@ -196,5 +211,9 @@ window.onclick = function(e) {
   if (e.target === document.getElementById('editPaymentModal')) closeModal('editPaymentModal');
 }
 </script>
+
+<a href="dashboard.php" class="back-button">
+  <i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
 </body>
 </html>

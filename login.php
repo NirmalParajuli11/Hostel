@@ -203,6 +203,22 @@ include('db/config.php');
       from { opacity: 1; }
       to { opacity: 0; }
     }
+    .signup-link {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      padding: 10px 20px;      
+      color: white;
+      text-decoration: none;
+      transition: 0.3s ease;
+      
+    }
+    .signup-link:hover {      
+      transform: scale(1.05);
+      
+    }
+
   </style>
 </head>
 <body>
@@ -250,11 +266,12 @@ include('db/config.php');
         </div>
         <div class="login-options-sm">
           <label><input type="checkbox" /> Remember me</label>
-          <a href="#">Forgot Password?</a>
+          <!-- <a href="#">Forgot Password?</a> -->
         </div>
         <button type="submit" class="login-submit-sm">LOGIN</button>
       </form>
-      <a href="index.php" class="back-home">← Back to Homepage</a>
+      <a href="register.php" class="signup-link">Don't have an account? Sign up</a>
+
     </div>
   </div>
 </main>

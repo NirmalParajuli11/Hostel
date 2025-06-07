@@ -11,29 +11,23 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get total room rent collected
-$roomResult = $conn->query("
-    SELECT SUM(room_price) AS total_rent 
-    FROM rooms 
-    WHERE user_id IS NOT NULL
+// Get total payments from students
+$paidResult = $conn->query("
+    SELECT SUM(amount_paid) AS total_paid 
+    FROM payments
 ");
-$roomRent = $roomResult->fetch_assoc()['total_rent'] ?? 0;
+$totalPaid = (float) ($paidResult->fetch_assoc()['total_paid'] ?? 0);
 
-// Get total food charges collected
-$foodResult = $conn->query("
-    SELECT SUM(meals.price) AS total_food 
-    FROM food_bookings 
-    JOIN meals ON food_bookings.meal_id = meals.id
+// Get total expenses from finances table
+$expenseResult = $conn->query("
+    SELECT SUM(amount) AS total_expense 
+    FROM finances 
+    WHERE type = 'Expense'
 ");
-$foodIncome = $foodResult->fetch_assoc()['total_food'] ?? 0;
+$totalExpense = (float) ($expenseResult->fetch_assoc()['total_expense'] ?? 0);
 
-// Get total expenses
-$expenseResult = $conn->query("SELECT SUM(amount) AS total_expense FROM expenses");
-$totalExpense = $expenseResult->fetch_assoc()['total_expense'] ?? 0;
-
-// Calculate profit/loss
-$totalIncome = $roomRent + $foodIncome;
-$profit = $totalIncome - $totalExpense;
+// ✅ Correct Net Result: Paid - Expenses
+$netResult = $totalPaid - $totalExpense;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,7 +39,7 @@ $profit = $totalIncome - $totalExpense;
     body {
       font-family: 'Poppins', sans-serif;
       background: #f9f9f9;
-      padding: 30px;
+      padding: 20px 40px;
     }
 
     h2 {
@@ -102,10 +96,8 @@ $profit = $totalIncome - $totalExpense;
 <h2>📈 Profit & Loss Summary</h2>
 
 <div class="summary-box">
-  <h3>💰 Income</h3>
-  <p>Room Rent Collected: <strong>Rs. <?php echo number_format($roomRent, 2); ?></strong></p>
-  <p>Food Charges Collected: <strong>Rs. <?php echo number_format($foodIncome, 2); ?></strong></p>
-  <p><strong>Total Income: Rs. <?php echo number_format($totalIncome, 2); ?></strong></p>
+  <h3>💵 Total Paid by Students</h3>
+  <p>Total Payments Received: <strong>Rs. <?php echo number_format($totalPaid, 2); ?></strong></p>
 </div>
 
 <div class="summary-box">
@@ -116,8 +108,8 @@ $profit = $totalIncome - $totalExpense;
 <div class="summary-box">
   <h3>📊 Net Result</h3>
   <p>
-    Net <?php echo $profit >= 0 ? '<span class="profit">Profit</span>' : '<span class="loss">Loss</span>'; ?>:
-    <strong>Rs. <?php echo number_format(abs($profit), 2); ?></strong>
+    Net <?php echo $netResult >= 0 ? '<span class="profit">Profit</span>' : '<span class="loss">Loss</span>'; ?>:
+    <strong>Rs. <?php echo number_format(abs($netResult), 2); ?></strong>
   </p>
 </div>
 

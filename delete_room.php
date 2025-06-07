@@ -2,44 +2,50 @@
 session_start();
 include('db/config.php');
 
-// Check if the ID is set in the URL
-if (!isset($_GET['id'])) {
-    // If no ID, redirect safely
-    header("Location: manage_rooms.php?error=no_id");
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    header("Location: login.php");
     exit();
 }
 
-$roomId = intval($_GET['id']);
+if (isset($_GET['id'])) {
+    $room_id = $_GET['id'];
+    
+    try {
+        // First, check if there are any reviews for this room
+        $check_reviews = $conn->prepare("SELECT COUNT(*) FROM reviews WHERE room_id = ?");
+        $check_reviews->bind_param("i", $room_id);
+        $check_reviews->execute();
+        $check_reviews->bind_result($review_count);
+        $check_reviews->fetch();
+        $check_reviews->close();
 
-// Step 1: Check if the room has any active bookings
-$checkSql = "SELECT COUNT(*) AS total FROM room_bookings WHERE room_id = ?";
-$checkStmt = $conn->prepare($checkSql);
-$checkStmt->bind_param("i", $roomId);
-$checkStmt->execute();
-$checkResult = $checkStmt->get_result();
-$row = $checkResult->fetch_assoc();
-$checkStmt->close();
+        if ($review_count > 0) {
+            // If there are reviews, show error message
+            header("Location: manage_rooms.php?error=" . urlencode("Cannot delete room: It has associated reviews. Please delete the reviews first."));
+            exit();
+        }
 
-if ($row['total'] > 0) {
-    //  Room is booked. Cannot delete!
-    header("Location: manage_rooms.php?error=room_booked");
-    exit();
-}
-
-// Step 2: Delete the room if no booking found
-$deleteSql = "DELETE FROM rooms WHERE id = ?";
-$deleteStmt = $conn->prepare($deleteSql);
-$deleteStmt->bind_param("i", $roomId);
-
-if ($deleteStmt->execute()) {
-    //  Successfully deleted
-    header("Location: manage_rooms.php?success=room_deleted");
-    exit();
+        // If no reviews, proceed with deletion
+        $stmt = $conn->prepare("DELETE FROM rooms WHERE id = ?");
+        $stmt->bind_param("i", $room_id);
+        
+        if ($stmt->execute()) {
+            header("Location: manage_rooms.php?success=Room deleted successfully");
+        } else {
+            header("Location: manage_rooms.php?error=" . urlencode("Error deleting room: " . $stmt->error));
+        }
+        $stmt->close();
+        
+    } catch (mysqli_sql_exception $e) {
+        // Handle foreign key constraint error
+        if (strpos($e->getMessage(), 'foreign key constraint fails') !== false) {
+            header("Location: manage_rooms.php?error=" . urlencode("Cannot delete room: It has associated records. Please delete all related records first."));
+        } else {
+            header("Location: manage_rooms.php?error=" . urlencode("Error: " . $e->getMessage()));
+        }
+    }
 } else {
-    //  Deletion failed
-    header("Location: manage_rooms.php?error=deletion_failed");
-    exit();
+    header("Location: manage_rooms.php?error=" . urlencode("Invalid room ID"));
 }
-
-$deleteStmt->close();
+$conn->close();
 ?>

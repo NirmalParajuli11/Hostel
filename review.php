@@ -27,8 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
 
     header("Location: user_dashboard.php?reviewed=true");
+   
     exit();
 }
+include('init_user_data.php');
 ?>
 
 <!DOCTYPE html>

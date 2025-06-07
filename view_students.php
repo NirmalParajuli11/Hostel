@@ -12,10 +12,12 @@ include('db/config.php');
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manage Students - Saathi Hostel</title>
+    <title>Students with Booked Rooms - Saathi Hostel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         body {
             margin: 0;
@@ -77,13 +79,12 @@ include('db/config.php');
         }
 
         th, td {
-            padding: 12px 18px;
+            padding: 12px 16px;
             text-align: center;
             font-size: 1rem;
             color: #333;
             vertical-align: middle;
             border-bottom: 1px solid #ddd;
-            white-space: nowrap;
         }
 
         th {
@@ -107,44 +108,40 @@ include('db/config.php');
         .action-buttons {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 8px;
+            flex-wrap: nowrap;
         }
 
-        .action-btn, .btn {
+        .action-btn {
             padding: 6px 12px;
             border-radius: 6px;
             font-weight: bold;
             text-decoration: none;
-            display: inline-block;
-            transition: 0.3s ease;
+            color: white;
+            white-space: nowrap;
         }
 
         .edit-btn {
             background-color: #4b0082;
-            color: white;
         }
 
         .edit-btn:hover {
             background-color: #6a0dad;
         }
 
-        .delete-btn {
-            background-color: #e74c3c;
-            color: white;
+        .view-btn {
+            background-color: #17a2b8;
         }
 
-        .delete-btn:hover {
-            background-color: #c0392b;
+        .view-btn:hover {
+            background-color: #138496;
         }
 
-        .approve-btn {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .approve-btn:hover {
-            background-color: #218838;
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         .success {
@@ -163,6 +160,23 @@ include('db/config.php');
             text-align: center;
         }
 
+        .food-preference {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .veg {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .non-veg {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
         @media (max-width: 768px) {
             .card {
                 padding: 20px;
@@ -178,85 +192,93 @@ include('db/config.php');
             }
 
             .action-buttons {
-                flex-direction: column;
-                gap: 6px;
+                gap: 4px;
             }
 
-            .action-btn, .btn {
-                padding: 5px;
+            .action-btn {
+                padding: 4px 8px;
+                font-size: 0.85rem;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- Main Content -->
 <div class="admin-content">
     <div class="card">
         <div class="card-header">
-            <h2>All Registered Students</h2>
-            <a href="create_students.php" class="create-btn">➕ Create Student</a>
+            <h2>Students Staying in Hostel</h2>
+            <a href="create_students.php" class="create-btn">+ Create Student</a>
         </div>
-        
+
         <?php if (isset($_GET['deleted'])): ?>
             <div class="success"> Student deleted successfully!</div>
         <?php endif; ?>
-        
+
         <table>
             <thead>
                 <tr>
                     <th>SN</th>
+                    <th>Photo</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Status</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Food Preference</th>
                     <th>Actions</th>
                 </tr>
             </thead>
+            <tbody>
+                <?php
+                $sql = "
+                    SELECT u.id, u.name, u.email, u.phone, u.address, u.photo, u.food_preference 
+                    FROM users u
+                    INNER JOIN room_bookings b ON u.id = b.user_id
+                    WHERE u.role = 'student'
+                    GROUP BY u.id
+                ";
 
-            <?php
-            // Query to select only students
-            $result = $conn->query("SELECT * FROM users WHERE role = 'student' AND status IN ('approved', 'pending')");
+                $result = $conn->query($sql);
 
-            if ($result->num_rows > 0) {
-                $sn = 1; // Start serial number
-                while ($row = $result->fetch_assoc()) {
-                    $id = $row['id'];
-                    $status = $row['status'];
-                    $name = $row['name'];
-                    $email = $row['email'];
+                if ($result->num_rows > 0) {
+                    $sn = 1;
+                    while ($row = $result->fetch_assoc()) {
+                        $id = $row['id'];
+                        $name = htmlspecialchars($row['name']);
+                        $email = htmlspecialchars($row['email']);
+                        $phone = htmlspecialchars($row['phone']);
+                        $address = htmlspecialchars($row['address']);
+                        $photo = !empty($row['photo']) ? 'assets/images/uploads/' . $row['photo'] : 'assets/images/profile_bg.jpg';
+                        $foodPreference = strtolower($row['food_preference']);
+                        $foodClass = $foodPreference === 'veg' ? 'veg' : 'non-veg';
 
-                    echo "<tr>
-                        <td>{$sn}</td>
-                        <td>" . htmlspecialchars($name) . "</td>
-                        <td>" . htmlspecialchars($email) . "</td>
-                        <td><strong style='color:" . ($status === 'approved' ? 'green' : 'orange') . "'>" . ucfirst($status) . "</strong></td>
-                        <td class='action-cell'>";
-
-                    echo "<div class='action-buttons'>";
-                    
-                    if ($status === 'pending') {
-                        echo "<a class='action-btn approve-btn' href='approve_student_action.php?id=$id'>Approve</a>";
-                        echo "<a class='action-btn delete-btn' href='delete_student.php?id=$id' onclick=\"return confirm('Are you sure you want to delete this student?');\">Delete</a>";
-                    } elseif ($status === 'approved') {
-                        echo "<a class='action-btn edit-btn' href='edit_student.php?id=$id'>Edit</a>";
-                        echo "<a class='action-btn delete-btn' href='delete_student.php?id=$id' onclick=\"return confirm('Are you sure you want to delete this student?');\">Delete</a>";
+                        echo "<tr>
+                            <td>{$sn}</td>
+                            <td><img src='{$photo}' alt='Photo' class='profile-pic'></td>
+                            <td>{$name}</td>
+                            <td>{$email}</td>
+                            <td>{$phone}</td>
+                            <td>{$address}</td>
+                            <td><span class='food-preference {$foodClass}'>" . ucfirst($foodPreference) . "</span></td>
+                            <td class='action-cell'>
+                                <div class='action-buttons'>
+                                    <a class='action-btn edit-btn' href='edit_student.php?id={$id}'>Edit</a>
+                                    <a class='action-btn view-btn' href='view_room_details.php?id={$id}'>View</a>
+                                </div>
+                            </td>
+                        </tr>";
+                        $sn++;
                     }
-                    
-                    echo "</div>";
-                    echo "</td></tr>";
-
-                    $sn++; // Increase SN
+                } else {
+                    echo "<tr><td colspan='8' class='no-records'>No students have booked rooms.</td></tr>";
                 }
-            } else {
-                echo "<tr><td colspan='5' class='no-records'>No students found.</td></tr>";
-            }
 
-            $conn->close();
-            ?>
+                $conn->close();
+                ?>
+            </tbody>
         </table>
     </div>
 </div>
 
-<?php include('partials/footer.php'); ?>
 </body>
 </html>

@@ -13,24 +13,12 @@
       color: #333;
     }
 
-    /* Navbar */
-    .navbar {
+    .custom-message {
+      text-align: center;
       background-color: #4b0082;
       color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-    }
-    .navbar .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    .navbar .nav-links a {
-      color: white;
-      margin-left: 1.5rem;
-      text-decoration: none;
-      font-weight: 500;
+      padding: 1rem;
+      font-size: 1.2rem;
     }
 
     /* Hero Section */
@@ -144,11 +132,10 @@
   </style>
 </head>
 <body>
-  
 
 <?php include('partials/navbar.php'); ?>
 
-<!-- 
+  <!-- 
   <header class="navbar">
     <div class="logo">SAATHI HOSTEL</div>
     <div class="nav-links">
@@ -157,7 +144,8 @@
       <a href="login.php">Login</a>
       <a href="register.php">Register</a>
     </div>
-  </header> -->
+  </header>
+  -->
 
   <section class="hero">
     <h1>Welcome to Saathi Hostel</h1>
@@ -175,7 +163,6 @@
     </div>
   </section>
 
-  <!-- 📞 Contact Section -->
   <section class="contact-section">
     <h2>Contact Us</h2>
     <div class="contact-details">
@@ -186,10 +173,10 @@
     </div>
   </section>
 
-  <!-- 🗺️ Map Section -->
   <section class="map-section">
     <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1956604977956!2d87.69969937450465!3d26.6635583768246!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39ef41e8f04d5f69%3A0x69a31fa8d1fc2a3f!2sDamak%2C%20Jhapa!5e0!3m2!1sen!2snp!4v1714361257740!5m2!1sen!2snp" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
   </section>
+
 </body>
 </html>
 <?php include('partials/footer.php'); ?>

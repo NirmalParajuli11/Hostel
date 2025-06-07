@@ -8,13 +8,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     exit();
 }
 
-// Fetch ID
+// Get student ID from URL
 if (!isset($_GET['id'])) {
     die("No student ID provided.");
 }
-
 $id = intval($_GET['id']);
+
+// Fetch student info
 $student = $conn->query("SELECT * FROM users WHERE id = $id")->fetch_assoc();
+
+// ✅ Check if student has a booking
+$hasBooking = false;
+$bookingCheck = $conn->query("SELECT id FROM room_bookings WHERE user_id = $id LIMIT 1");
+if ($bookingCheck && $bookingCheck->num_rows > 0) {
+    $hasBooking = true;
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -76,28 +84,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input, select {
             width: 100%;
             padding: 12px;
+            padding-right: 44px;
+            box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1rem;
             background-color: #f9f9f9;
         }
 
-        .password-wrapper {
-            position: relative;
+        select:disabled {
+            background-color: #eee;
+            cursor: not-allowed;
         }
 
-        .password-wrapper input {
-            padding-right: 40px;
+        .password-wrapper {
+            position: relative;
+            margin-top: 5px;
         }
 
         .toggle-password {
             position: absolute;
             top: 50%;
-            right: 12px;
+            right: 14px;
             transform: translateY(-50%);
             cursor: pointer;
             font-size: 1.2rem;
             color: #666;
+            user-select: none;
         }
 
         button {
@@ -129,7 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .note {
             font-size: 0.9rem;
             color: #666;
-            margin-top: 5px;
         }
     </style>
 </head>
@@ -145,10 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="email" name="email" value="<?= htmlspecialchars($student['email']) ?>" required>
 
         <label>Status</label>
-        <select name="status">
+        <select name="status" <?= $hasBooking ? 'disabled' : '' ?>>
             <option value="approved" <?= $student['status'] === 'approved' ? 'selected' : '' ?>>Approved</option>
             <option value="pending" <?= $student['status'] === 'pending' ? 'selected' : '' ?>>Pending</option>
         </select>
+        <?php if ($hasBooking): ?>
+            <small class="note">Status change disabled: student has booked a room.</small>
+        <?php endif; ?>
 
         <label>Change Password <span class="note">(Leave blank to keep current)</span></label>
         <div class="password-wrapper">
@@ -168,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const icon = document.querySelector('.toggle-password');
         if (input.type === 'password') {
             input.type = 'text';
-            icon.textContent = '🙈';
+            icon.textContent = '🔒';
         } else {
             input.type = 'password';
             icon.textContent = '👁';

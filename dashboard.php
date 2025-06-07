@@ -6,6 +6,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
+$conn = new mysqli('localhost', 'root', '', 'hostel');
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Fetch count of pending food orders
+$pendingFoodQuery = $conn->query("SELECT COUNT(*) AS pending_food FROM food_bookings WHERE status = 'pending'");
+$pendingFoodRow = $pendingFoodQuery->fetch_assoc();
+$pendingFoodOrders = $pendingFoodRow['pending_food'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -82,7 +91,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
             display: none;
             flex-direction: column;
             box-shadow: 0 12px 24px rgba(0,0,0,0.25);
-            min-width: 180px;
+            min-width: 200px;
             z-index: 1003;
         }
 
@@ -97,6 +106,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
             display: flex;
             align-items: center;
             gap: 10px;
+            white-space: nowrap;
+            min-width: 200px;
         }
 
         .nav-actions .dropdown-content a:hover {
@@ -221,6 +232,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
         .card a:hover {
             background-color: #6a0dad;
         }
+        .card-count {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 24px;
+    background-color: #4b0082;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+.card-count:hover {
+    background-color: #6a0dad;
+}
 
         @media (max-width: 1024px) {
             .grid {
@@ -246,14 +272,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 </head>
 <body>
 <div class="topnav">
-    <h1 onclick="location.href='dashboard.php'">Admin Panel</h1>
+    <h1 onclick="location.href='dashboard.php'">Saathi Hostel</h1>
     <div class="nav-actions">
         <div class="dropdown">
             <span>Management</span>
             <div class="dropdown-content">
                 <a href="manage_staff.php"><i class="fas fa-users-cog"></i> Manage Staff</a>
                 <a href="manage_finances.php"><i class="fas fa-wallet"></i> Manage Finances</a>
-                <a href="view_reports.php"><i class="fas fa-chart-line"></i> View Reports</a>
+                <a href="calculate_rent.php"><i class="fas fa-file"></i> Manage Rent</a>
+                <a href="approve_food_orders.php"><i class="fas fa-concierge-bell"></i> Manage Food Requests</a>
             </div>
         </div>
         <div class="dropdown">
@@ -267,7 +294,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
         <div class="dropdown">
             <span>Students</span>
             <div class="dropdown-content">
-                <a href="approve_students.php"><i class="fas fa-check-circle"></i> Approve Students</a>
+                <a href="approve_students.php"><i class="fas fa-check-circle"></i> Pending Students</a>
                 <a href="create_students.php"><i class="fas fa-user-plus"></i> Create Student</a>
                 <a href="manage_students.php"><i class="fas fa-users"></i> Manage Students</a>
             </div>
@@ -287,7 +314,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     <div class="hamburger-menu">
         <a href="manage_staff.php"><i class="fas fa-users-cog"></i> Manage Staff</a>
         <a href="manage_finances.php"><i class="fas fa-wallet"></i> Manage Finances</a>
-        <a href="view_reports.php"><i class="fas fa-chart-line"></i> View Reports</a>
+        <a href="calculate_rent.php"><i class="fas fa-file"></i> Room Rent</a>
         <a href="create_room.php"><i class="fas fa-bed"></i> Create Room</a>
         <a href="view_rooms.php"><i class="fas fa-eye"></i> View Rooms</a>
         <a href="manage_rooms.php"><i class="fas fa-tools"></i> Manage Rooms</a>
@@ -299,6 +326,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
         <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 </div>
+
+<!-- The dashboard content below remains unchanged -->
+
 
 <div class="admin-content">
     <div class="welcome-card">
@@ -394,7 +424,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
             <div class="card">
                 <i class="fas fa-house"></i>
                 <div class="card-title">Total Rooms</div>
-                <a href="view_rooms.php"><?php echo $totalRooms; ?></a>
+                <a href="manage_rooms.php"><?php echo $totalRooms; ?></a>
             </div>
 
 
@@ -432,6 +462,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
             <div class="card-title">Manage Food Preferences</div>
             <a href="manage_food.php">Go</a>
         </div>
+        <div class="card">
+    <i class="fas fa-concierge-bell"></i>
+    <div class="card-title">Order Food Requests</div>
+    <a href="approve_food_orders.php" style="background: <?= $pendingFoodOrders > 0 ? '#e74c3c' : '#4b0082' ?>;">
+        <?= $pendingFoodOrders ?>
+    </a>
+</div>
+
 
         <div class="card">
             <i  class="fas fa-file"></i>

@@ -1,50 +1,30 @@
 <?php
 include('db/config.php');
+session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name     = $_POST['name'];
-    $email    = $_POST['email'];
-    $phone    = $_POST['phone'];
-    $address  = $_POST['address'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $food     = $_POST['food_preference'];
+    $name     = trim($_POST['name']);
+    $email    = trim($_POST['email']);
+    $phone    = trim($_POST['phone']);
+    $address  = trim($_POST['address']);
+    $password = $_POST['password'];
 
-    // Handle image upload
-    $photo = $_FILES['photo'];
-    $photo_name = time() . "_" . basename($photo["name"]);
-    $target_dir = "assets/images/uploads/";
-    $target_file = $target_dir . $photo_name;
+    // Hash password
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $role = "student";
+    $status = "pending";
+    $photo = "";
 
-    if (!is_dir($target_dir)) {
-        mkdir($target_dir, 0777, true);
-    }
+    $stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password, photo, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssss", $name, $email, $phone, $address, $hashedPassword, $photo, $role, $status);
 
-    if (move_uploaded_file($photo["tmp_name"], $target_file)) {
-        $role = "student";
-        $status = "pending";
-
-        $sql = "INSERT INTO users (name, email, phone, address, password, food_preference, photo, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("sssssssss", $name, $email, $phone, $address, $password, $food, $photo_name, $role, $status);
-
-            if ($stmt->execute()) {
-                header("Location: register.php?registered=1");
-                exit();
-            } else {
-                header("Location: register.php?error=" . urlencode("Failed to register user. Email might already exist."));
-                exit();
-            }
-        } else {
-            header("Location: register.php?error=" . urlencode("Database error. Please try again."));
-            exit();
-        }
+    if ($stmt->execute()) {
+        $_SESSION['register_success'] = "Registration successful!";
+        header("Location: register.php?registered=1");
+        exit();
     } else {
-        header("Location: register.php?error=" . urlencode("Image upload failed. Try a different image."));
+        header("Location: register.php?error=" . urlencode("Email already exists or server error."));
         exit();
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>

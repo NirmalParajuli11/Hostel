@@ -21,13 +21,24 @@ if (!empty($sortRoomType)) {
 }
 ?>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rooms - Saathi Hostel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
 <div class="admin-content">
     <div class="card">
         <h2>Manage Rooms</h2>
 
         <!-- Add Room Button and Sort Option -->
         <div class="top-actions">
-            <a href="create_room.php" class="add-room-btn">➕ Add New Room</a>
+            <a href="create_room.php" class="add-room-btn">+ Add New Room</a>
 
             <form method="GET" class="sort-form">
                 <label for="sort_room_type" style="font-weight: bold;">Sort by Room Type:</label>
@@ -86,8 +97,9 @@ if (!empty($sortRoomType)) {
                             echo "<span style='color: red;'>Full</span> | ";
                         }
 
-                        echo "<a href='edit_room.php?id=" . $row['id'] . "' class='action-btn edit-btn'>Edit</a> | 
-                              <a href='delete_room.php?id=" . $row['id'] . "' class='action-btn delete-btn' onclick='return confirm(\"Are you sure you want to delete this room?\")'>Delete</a>
+                        echo "<a href='view_room_students.php?room_id=" . $row['id'] . "' class='action-btn view-btn'>View</a>
+                        <a href='edit_room.php?id=" . $row['id'] . "' class='action-btn edit-btn'>Edit</a> | 
+                              <a href='delete_room.php?id=" . $row['id'] . "' class='action-btn delete-btn' onclick='return confirmDelete(\"" . $row['id'] . "\")'>Delete</a>
                               </td>
                               </tr>";
                     }
@@ -138,17 +150,16 @@ if (!empty($sortRoomType)) {
     }
 
     .add-room-btn {
-        background-color: #28a745;
+        background-color: #4b0082;
         color: white;
-        font-weight: bold;
         padding: 10px 20px;
-        border-radius: 8px;
+        border-radius: 5px;
         text-decoration: none;
-        transition: background-color 0.3s ease;
+        transition: background-color 0.3s;
     }
 
     .add-room-btn:hover {
-        background-color: #218838;
+        background-color: #350065;
     }
 
     .sort-form {
@@ -159,83 +170,92 @@ if (!empty($sortRoomType)) {
 
     .sort-form select {
         padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        font-size: 0.95rem;
+        border-radius: 5px;
+        border: 1px solid #ddd;
     }
 
     table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     th, td {
-        padding: 12px 18px;
-        text-align: center;
-        font-size: 1rem;
-        color: #333;
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
     }
 
     th {
-        background-color: #4b0082;
-        color: white;
-        font-weight: bold;
-    }
-
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    tr:hover {
-        background-color: #f1f1f1;
-    }
-
-    td, th {
-        border-bottom: 1px solid #ddd;
+        background-color: #f8f9fa;
+        font-weight: 600;
     }
 
     .action-btn {
         padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: bold;
+        border-radius: 4px;
         text-decoration: none;
+        margin: 0 2px;
+        font-size: 0.9rem;
+    }
+
+    .view-btn {
+        background-color: #17a2b8;
+        color: white;
     }
 
     .edit-btn {
-        background-color: #4b0082;
+        background-color: #28a745;
         color: white;
-    }
-
-    .edit-btn:hover {
-        background-color: #6a0dad;
     }
 
     .delete-btn {
-        background-color: #e74c3c;
+        background-color: #dc3545;
         color: white;
     }
 
-    .delete-btn:hover {
-        background-color: #c0392b;
-    }
-
-    @media (max-width: 768px) {
-        .card {
-            padding: 30px 20px;
-        }
-        .card h2 {
-            font-size: 1.5rem;
-        }
-        table th, table td {
-            font-size: 0.9rem;
-            padding: 10px;
-        }
-        .action-btn {
-            padding: 4px 8px;
-        }
+    .action-btn:hover {
+        opacity: 0.9;
     }
 </style>
+
+<script>
+function confirmDelete(roomId) {
+    event.preventDefault();
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = 'delete_room.php?id=' + roomId;
+        }
+    });
+    return false;
+}
+
+<?php
+if (isset($_GET['error'])) {
+    echo "Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '" . addslashes($_GET['error']) . "',
+        confirmButtonColor: '#dc3545'
+    });";
+} elseif (isset($_GET['success'])) {
+    echo "Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '" . addslashes($_GET['success']) . "',
+        confirmButtonColor: '#28a745'
+    });";
+}
+?>
+</script>
+
+</body>
+</html>
